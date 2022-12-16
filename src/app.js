@@ -1,7 +1,15 @@
 import { spawn } from 'child_process';
 import os from 'os';
 import readline from 'readline';
-import { cat, getInfo, getList, getPath, isExist } from './utils/index.js';
+import {
+  add,
+  cat,
+  getInfo,
+  getList,
+  getPath,
+  checkIfExist,
+  checkIfNotExist,
+} from './utils/index.js';
 import { AppError, InputError, OperationError } from './error.js';
 
 const messages = {
@@ -13,7 +21,7 @@ const messages = {
 export class App {
   constructor(username) {
     this.username = this.getUsername(username);
-    this.currentDirectory = null;
+    this._currentDirectory = null;
     this.homeDirectory = null;
   }
 
@@ -34,16 +42,17 @@ export class App {
     console.log(messages.greeting(this.username));
   }
 
-  runCommand(command, arggs) {
-    const child = spawn(command, arggs);
-    process.stdin.pipe(child.stdin);
-    child.stdout.pipe(process.stdout);
-  }
-
   async cat(args) {
     const fileName = args[0];
     const target = await this.getFile(fileName);
     await cat(target.path);
+  }
+
+  async add(args) {
+    const fileName = args[0];
+    const filepath = this.getPath(fileName);
+    await checkIfNotExist(filepath);
+    await add(filepath);
   }
 
   async getDir() {
@@ -77,29 +86,34 @@ export class App {
   }
 
   set dir(path) {
-    this.currentDirectory = path;
+    this._currentDirectory = path;
     this.printCurrentDir();
   }
 
   get dir() {
-    return this.currentDirectory;
+    return this._currentDirectory;
   }
 
-  async getItem(path, type) {
-    if (!path) throw new InputError();
-    await isExist(path, this.dir);
+  async getItem(itemName, type) {
+    if (!itemName) throw new InputError();
+    const itemPath = this.getPath(itemName);
+    await checkIfExist(itemPath);
     const directoryContent = await this.getDir(this.dir);
-    const target = directoryContent.find(({ name }) => path === name);
-    if (target.type === type) throw new InputError();
+    const target = directoryContent.find(({ name }) => name === itemName);
+    if (target.type !== type) throw new InputError();
     return target;
   }
 
-  async getDirectory(path) {
-    return this.getItem(path, 'file');
+  async getDirectory(directoryName) {
+    return await this.getItem(directoryName, 'directory');
+  }
+
+  getPath(filename) {
+    return getPath(this.dir, filename);
   }
 
   async getFile(path) {
-    return this.getItem(path, 'directory');
+    return await this.getItem(path, 'file');
   }
 
   async cd(args) {
@@ -142,6 +156,7 @@ export class App {
       ls: this.ls.bind(this),
       cd: this.cd.bind(this),
       cat: this.cat.bind(this),
+      add: this.add.bind(this),
     };
 
     readline.createInterface(

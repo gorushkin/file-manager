@@ -2,7 +2,7 @@ import path, { dirname } from 'path';
 import { createReadStream, promises } from 'fs';
 import { fileURLToPath } from 'url';
 import { Item } from '../item.js';
-import { OperationError } from '../error.js';
+import { AppError, OperationError } from '../error.js';
 
 export const getDirname = (object) => dirname(fileURLToPath(object));
 
@@ -46,15 +46,20 @@ export const getInfo = async (filename, folderPath) => {
   return new Item(filename, itemPath, stat.isFile(), stat.isDirectory());
 };
 
-export const isExist = async (filename, folderPath) => {
-  const path = getPath(folderPath, filename);
+export const checkIfExist = async (path, isExist = false) => {
   try {
     await promises.stat(path);
+    if (isExist) throw new OperationError();
   } catch (error) {
-    if (error.code === 'ENOENT') throw new OperationError();
+    if (isExist && error.code === 'ENOENT') return;
+    if (!isExist && error.code === 'ENOENT') throw new OperationError();
+    if (error instanceof AppError) throw new OperationError();
+
     throw new Error(error);
   }
 };
+
+export const checkIfNotExist = async (path) => checkIfExist(path, true);
 
 export const cat = async (path) => {
   return await new Promise((res, rej) => {
@@ -64,4 +69,12 @@ export const cat = async (path) => {
     readableStream.on('error', rej);
     readableStream.on('end', res);
   });
+};
+
+export const add = async (path) => {
+  try {
+    await promises.writeFile(path, '');
+  } catch (error) {
+    console.log('error: ', error);
+  }
 };
