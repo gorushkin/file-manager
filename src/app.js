@@ -45,13 +45,28 @@ export class App {
   }
 
   async getDir() {
-    const list = (await getList(this.dir));
+    const list = await getList(this.dir);
     return Promise.all(list.map((item) => getInfo(item, this.dir)));
   }
 
   async ls() {
     const list = await this.getDir();
-    const simpleList = list.map(({ name, type }) => ({ name, type }));
+    const groupedList = list.reduce(
+      (acc, item) => {
+        acc[item.type].push(item);
+        return acc;
+      },
+      { directory: [], file: [] }
+    );
+    const sortedList = Object.entries(groupedList)
+      .reduce((acc, [type, items]) => {
+        const sortedGroup = items.sort((a, b) => (a.name > b.name ? 1 : -1));
+        return [...acc, { type, items: sortedGroup }];
+      }, [])
+      .sort((a, b) => (a.type > b.type ? 1 : -1))
+      .reduce((acc, item) => [...acc, ...item.items], []);
+
+    const simpleList = sortedList.map(({ name, type }) => ({ name, type }));
     console.table(simpleList);
   }
 
