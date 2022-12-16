@@ -1,5 +1,5 @@
 import path, { dirname } from 'path';
-import fs, { promises } from 'fs';
+import { createReadStream, promises } from 'fs';
 import { fileURLToPath } from 'url';
 import { Item } from '../item.js';
 import { OperationError } from '../error.js';
@@ -54,4 +54,14 @@ export const isExist = async (filename, folderPath) => {
     if (error.code === 'ENOENT') throw new OperationError();
     throw new Error(error);
   }
+};
+
+export const cat = async (path) => {
+  return await new Promise((res, rej) => {
+    const readableStream = createReadStream(path);
+    const writeableStream = process.stdout;
+    readableStream.pipe(writeableStream);
+    readableStream.on('error', rej);
+    readableStream.on('end', res);
+  });
 };

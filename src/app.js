@@ -1,7 +1,7 @@
 import { spawn } from 'child_process';
 import os from 'os';
 import readline from 'readline';
-import { getInfo, getList, getPath, isExist } from './utils/index.js';
+import { cat, getInfo, getList, getPath, isExist } from './utils/index.js';
 import { AppError, InputError, OperationError } from './error.js';
 
 const messages = {
@@ -38,6 +38,12 @@ export class App {
     const child = spawn(command, arggs);
     process.stdin.pipe(child.stdin);
     child.stdout.pipe(process.stdout);
+  }
+
+  async cat(args) {
+    const fileName = args[0];
+    const target = await this.getFile(fileName);
+    await cat(target.path);
   }
 
   async getDir() {
@@ -79,13 +85,21 @@ export class App {
     return this.currentDirectory;
   }
 
-  async getDirectory(path) {
+  async getItem(path, type) {
     if (!path) throw new InputError();
     await isExist(path, this.dir);
     const directoryContent = await this.getDir(this.dir);
     const target = directoryContent.find(({ name }) => path === name);
-    if (target.isFile) throw new InputError();
+    if (target.type === type) throw new InputError();
     return target;
+  }
+
+  async getDirectory(path) {
+    return this.getItem(path, 'file');
+  }
+
+  async getFile(path) {
+    return this.getItem(path, 'directory');
   }
 
   async cd(args) {
@@ -127,6 +141,7 @@ export class App {
       up: this.up.bind(this),
       ls: this.ls.bind(this),
       cd: this.cd.bind(this),
+      cat: this.cat.bind(this),
     };
 
     readline.createInterface(
