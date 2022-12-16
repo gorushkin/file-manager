@@ -1,5 +1,5 @@
 import path, { dirname } from 'path';
-import { fstat, promises } from 'fs';
+import fs, { promises } from 'fs';
 import { fileURLToPath } from 'url';
 import { Item } from '../item.js';
 import { OperationError } from '../error.js';
@@ -41,13 +41,9 @@ export const getList = async (path) => {
 };
 
 export const getInfo = async (filename, folderPath) => {
-  try {
-    const itemPath = getPath(folderPath, filename);
-    const stat = await promises.stat(itemPath);
-    return new Item(filename, itemPath, stat.isFile(), stat.isDirectory());
-  } catch (error) {
-    console.log(error);
-  }
+  const itemPath = getPath(folderPath, filename);
+  const stat = await promises.stat(itemPath);
+  return new Item(filename, itemPath, stat.isFile(), stat.isDirectory());
 };
 
 export const isExist = async (filename, folderPath) => {

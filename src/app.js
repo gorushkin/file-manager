@@ -1,8 +1,8 @@
 import { spawn } from 'child_process';
 import os from 'os';
 import readline from 'readline';
-import { getInfo, getList, isExist } from './utils/index.js';
-import { AppError, InputError } from './error.js';
+import { getInfo, getList, getPath, isExist } from './utils/index.js';
+import { AppError, InputError, OperationError } from './error.js';
 
 const messages = {
   currentPath: (path) => `You are currently in ${path}`,
@@ -32,10 +32,6 @@ export class App {
 
   sayHi() {
     console.log(messages.greeting(this.username));
-  }
-
-  defaultPromt() {
-    console.log('I did not get you');
   }
 
   runCommand(command, arggs) {
@@ -71,7 +67,7 @@ export class App {
   }
 
   up() {
-    console.log('up');
+    this.dir = getPath(this.dir, '../');
   }
 
   set dir(path) {
@@ -83,19 +79,19 @@ export class App {
     return this.currentDirectory;
   }
 
+  async getDirectory(path) {
+    if (!path) throw new InputError();
+    await isExist(path, this.dir);
+    const directoryContent = await this.getDir(this.dir);
+    const target = directoryContent.find(({ name }) => path === name);
+    if (target.isFile) throw new InputError();
+    return target;
+  }
+
   async cd(args) {
-    try {
-      const directoryName = args[0];
-      if (!directoryName) throw new InputError();
-      await isExist(directoryName, this.dir);
-      const directoryContent = await this.getDir(this.dir);
-      const target = directoryContent.find(({ name }) => directoryName === name);
-      if (target.isFile) throw new InputError();
-      this.dir = target.getPath(this.dir);
-    } catch (error) {
-      if (!(error instanceof AppError)) throw new Error(error);
-      throw new Error(error);
-    }
+    const directoryName = args[0];
+    const target = await this.getDirectory(directoryName);
+    this.dir = target.getPath(this.dir);
   }
 
   sayBye(withNewLine) {
@@ -120,7 +116,7 @@ export class App {
     console.log(messages.currentPath(this.dir));
   }
 
-  start() {
+  async start() {
     this.init();
     this.sayHi();
     this.printCurrentDir();
@@ -134,13 +130,13 @@ export class App {
     };
 
     readline.createInterface(
-      process.stdin.on('data', (chunk) => {
+      process.stdin.on('data', async (chunk) => {
         try {
           const [userInput] = chunk.toString().split('\n');
           const [command, ...args] = userInput.split(' ');
           const filteredArgs = args.filter((item) => !!item);
-          if (commandMapping[command]) return commandMapping[command](filteredArgs);
-          return commandMapping.default();
+          if (commandMapping[command]) return await commandMapping[command](filteredArgs);
+          throw new OperationError();
         } catch (error) {
           if (!(error instanceof AppError)) throw new Error(error);
           console.log(error.message);
