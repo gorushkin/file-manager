@@ -21,7 +21,7 @@ const messages = {
 export class App {
   constructor(username) {
     this.username = this.getUsername(username);
-    this._currentDirectory = null;
+    this.dir = null;
     this.homeDirectory = null;
   }
 
@@ -42,14 +42,17 @@ export class App {
     console.log(messages.greeting(this.username));
   }
 
-  async cat(args) {
+  async rn(args) {
     const fileName = args[0];
+  }
+
+  async cat(fileName) {
     const target = await this.getFile(fileName);
     await cat(target.path);
   }
 
-  async add(args) {
-    const fileName = args[0];
+  async add(fileName) {
+    if (!fileName) throw new InputError();
     const filepath = this.getPath(fileName);
     await checkIfNotExist(filepath);
     await add(filepath);
@@ -85,15 +88,6 @@ export class App {
     this.dir = getPath(this.dir, '../');
   }
 
-  set dir(path) {
-    this._currentDirectory = path;
-    this.printCurrentDir();
-  }
-
-  get dir() {
-    return this._currentDirectory;
-  }
-
   async getItem(itemName, type) {
     if (!itemName) throw new InputError();
     const itemPath = this.getPath(itemName);
@@ -116,8 +110,7 @@ export class App {
     return await this.getItem(path, 'file');
   }
 
-  async cd(args) {
-    const directoryName = args[0];
+  async cd(directoryName) {
     const target = await this.getDirectory(directoryName);
     this.dir = target.getPath(this.dir);
   }
@@ -151,12 +144,12 @@ export class App {
 
     const commandMapping = {
       '.exit': this.exit.bind(this),
-      default: this.defaultPromt,
-      up: this.up.bind(this),
       ls: this.ls.bind(this),
       cd: this.cd.bind(this),
+      up: this.up.bind(this),
       cat: this.cat.bind(this),
       add: this.add.bind(this),
+      rn: this.rn.bind(this),
     };
 
     readline.createInterface(
@@ -164,12 +157,14 @@ export class App {
         try {
           const [userInput] = chunk.toString().split('\n');
           const [command, ...args] = userInput.split(' ');
-          const filteredArgs = args.filter((item) => !!item);
-          if (commandMapping[command]) return await commandMapping[command](filteredArgs);
+          const [arg1, arg2] = args.filter((item) => !!item);
+          if (commandMapping[command]) return await commandMapping[command](arg1, arg2);
           throw new OperationError();
         } catch (error) {
           if (!(error instanceof AppError)) throw new Error(error);
           console.log(error.message);
+        } finally {
+          this.printCurrentDir();
         }
       })
     );
