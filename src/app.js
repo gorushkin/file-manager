@@ -1,15 +1,8 @@
-import { spawn } from 'child_process';
 import os from 'os';
 import readline from 'readline';
-import {
-  add,
-  cat,
-  getInfo,
-  getList,
-  getPath,
-  checkIfExist,
-  checkIfNotExist,
-} from './utils/index.js';
+import { getPath, getAbsolutePath, getNewPath } from './utils/index.js';
+
+import { add, cat, getItem, getList, checkIfExist, checkIfNotExist, rn } from './services.js';
 import { AppError, InputError, OperationError } from './error.js';
 
 const messages = {
@@ -42,29 +35,35 @@ export class App {
     console.log(messages.greeting(this.username));
   }
 
-  async rn(args) {
-    const fileName = args[0];
+  async rn(itempPath = 'src/q', newFilename = 'qwerty.com') {
+    if (!itempPath || !newFilename) throw new InputError();
+    const absolutePath = this.getAbsolutePath(itempPath);
+    await checkIfExist(absolutePath);
+    const item = await getItem(absolutePath);
+    if (!item.isFile) throw new InputError();
+    const newPath = getNewPath(absolutePath, newFilename);
+    await checkIfNotExist(newPath);
+    await rn(absolutePath, newPath);
   }
 
-  async cat(fileName) {
-    const target = await this.getFile(fileName);
-    await cat(target.path);
+  async cat(path) {
+    if (!path) throw new InputError();
+    const absolutePath = this.getAbsolutePath(path);
+    await checkIfExist(absolutePath);
+    const item = await getItem(absolutePath);
+    if (!item.isFile) throw new InputError();
+    await cat(absolutePath);
   }
 
   async add(fileName) {
     if (!fileName) throw new InputError();
-    const filepath = this.getPath(fileName);
+    const filepath = this.getAbsolutePath(fileName);
     await checkIfNotExist(filepath);
     await add(filepath);
   }
 
-  async getDir() {
-    const list = await getList(this.dir);
-    return Promise.all(list.map((item) => getInfo(item, this.dir)));
-  }
-
   async ls() {
-    const list = await this.getDir();
+    const list = await getList(this.dir);
     const groupedList = list.reduce(
       (acc, item) => {
         acc[item.type].push(item);
@@ -88,43 +87,21 @@ export class App {
     this.dir = getPath(this.dir, '../');
   }
 
-  async getItem(itemName, type) {
-    if (!itemName) throw new InputError();
-    const itemPath = this.getPath(itemName);
-    await checkIfExist(itemPath);
-    const directoryContent = await this.getDir(this.dir);
-    const target = directoryContent.find(({ name }) => name === itemName);
-    if (target.type !== type) throw new InputError();
-    return target;
+  getAbsolutePath(path) {
+    return getAbsolutePath(path, this.dir);
   }
 
-  async getDirectory(directoryName) {
-    return await this.getItem(directoryName, 'directory');
-  }
-
-  getPath(filename) {
-    return getPath(this.dir, filename);
-  }
-
-  async getFile(path) {
-    return await this.getItem(path, 'file');
-  }
-
-  async cd(directoryName) {
-    const target = await this.getDirectory(directoryName);
-    this.dir = target.getPath(this.dir);
+  async cd(path) {
+    if (!path) throw new InputError();
+    const absolutePath = this.getAbsolutePath(path);
+    await checkIfExist(absolutePath);
+    this.dir = absolutePath;
   }
 
   sayBye(withNewLine) {
     const prefix = withNewLine ? '\n' : '';
     const message = `${prefix}${messages.bye(this.username)}`;
     console.log(message);
-  }
-
-  getCureentFolder() {
-    const child = spawn('ls', ['-la']);
-    process.stdin.pipe(child.stdin);
-    child.stdout.pipe(process.stdout);
   }
 
   init() {
