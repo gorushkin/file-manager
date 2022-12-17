@@ -59,7 +59,7 @@ export const getList = async (directoryPath) => {
   return await Promise.all(itemPaths);
 };
 
-export const copy = async (itempPath, itemNewPath) => {
+export const cp = async (itempPath, itemNewPath) => {
   return await new Promise((res, rej) => {
     const readableStream = createReadStream(itempPath);
     const writeableStream = createWriteStream(itemNewPath);

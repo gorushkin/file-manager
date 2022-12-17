@@ -2,7 +2,7 @@ import os from 'os';
 import readline from 'readline';
 import { getPath, getAbsolutePath, getNewPath } from './utils/index.js';
 
-import { add, cat, getItem, getList, checkIfExist, checkIfNotExist, rn, copy } from './services.js';
+import { add, cat, getItem, getList, checkIfExist, checkIfNotExist, rn, cp } from './services.js';
 import { AppError, InputError, OperationError } from './error.js';
 
 const messages = {
@@ -46,13 +46,13 @@ export class App {
     await rn(absolutePath, newPath);
   }
 
-  async copy(itempPath = 'q', itemNewPath = 'qwe') {
+  async cp(itempPath = 'q', itemNewPath = 'qwe') {
     if (!itempPath || !itemNewPath) throw new InputError();
     const absolutePath = this.getAbsolutePath(itempPath);
     const absoluteNewPath = this.getAbsolutePath(itemNewPath);
     await checkIfExist(absolutePath);
     await checkIfNotExist(absoluteNewPath);
-    await copy(absolutePath, absoluteNewPath);
+    await cp(absolutePath, absoluteNewPath);
   }
 
   async cat(path) {
@@ -136,7 +136,7 @@ export class App {
       cat: this.cat.bind(this),
       add: this.add.bind(this),
       rn: this.rn.bind(this),
-      copy: this.copy.bind(this),
+      cp: this.cp.bind(this),
     };
 
     readline.createInterface(
