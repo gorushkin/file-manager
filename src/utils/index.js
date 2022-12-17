@@ -35,3 +35,11 @@ export const getNewPath = (itemPath, filename) => {
   const { root, dir } = path.parse(itemPath);
   return path.join(root, dir, filename);
 };
+
+export const getUsername = (username) => {
+  if (!username) return username;
+  return username
+    .split('')
+    .map((symbol, i) => (i === 0 ? symbol.toUpperCase() : symbol))
+    .join('');
+};

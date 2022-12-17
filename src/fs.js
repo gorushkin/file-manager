@@ -78,4 +78,4 @@ export const mv = async (itempPath, itemNewPath) => {
   await rm(itempPath);
 };
 
-export const services =  {cat, add, mv, getList, getItem, rm, cp, checkIfExist, checkIfNotExist}
+export const fs = { cat, add, mv, getList, getItem, rm, cp, checkIfExist, checkIfNotExist };

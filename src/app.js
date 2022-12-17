@@ -1,8 +1,8 @@
 import os from 'os';
 import readline from 'readline';
-import { services } from './services.js';
+import { fs } from './fs.js';
 import { AppError, InputError, OperationError } from './error.js';
-import { getPath, getAbsolutePath, getNewPath } from './utils/index.js';
+import { getPath, getAbsolutePath, getNewPath, getUsername } from './utils/index.js';
 
 const messages = {
   currentPath: (path) => `You are currently in ${path}`,
@@ -12,17 +12,9 @@ const messages = {
 
 export class App {
   constructor(username) {
-    this.username = this.getUsername(username);
+    this.username = getUsername(username);
     this.dir = null;
     this.homeDirectory = null;
-  }
-
-  getUsername(username) {
-    if (!username) return username;
-    return username
-      .split('')
-      .map((symbol, i) => (i === 0 ? symbol.toUpperCase() : symbol))
-      .join('');
   }
 
   exit(withNewLine = false) {
@@ -37,57 +29,57 @@ export class App {
   async rn(itempPath, newFilename = 'qwerty.com') {
     if (!itempPath || !newFilename) throw new InputError();
     const absolutePath = this.getAbsolutePath(itempPath);
-    await services.checkIfExist(absolutePath);
-    const item = await services.getItem(absolutePath);
+    await fs.checkIfExist(absolutePath);
+    const item = await fs.getItem(absolutePath);
     if (!item.isFile) throw new InputError();
     const newPath = getNewPath(absolutePath, newFilename);
-    await services.checkIfNotExist(newPath);
-    await services.rn(absolutePath, newPath);
+    await fs.checkIfNotExist(newPath);
+    await fs.rn(absolutePath, newPath);
   }
 
   async cp(itempPath, itemNewPath) {
     if (!itempPath || !itemNewPath) throw new InputError();
     const absolutePath = this.getAbsolutePath(itempPath);
     const absoluteNewPath = this.getAbsolutePath(itemNewPath);
-    await services.checkIfExist(absolutePath);
-    await services.checkIfNotExist(absoluteNewPath);
-    await services.cp(absolutePath, absoluteNewPath);
+    await fs.checkIfExist(absolutePath);
+    await fs.checkIfNotExist(absoluteNewPath);
+    await fs.cp(absolutePath, absoluteNewPath);
   }
 
   async rm(itempPath = 'qwe') {
-    if (!itempPath ) throw new InputError();
+    if (!itempPath) throw new InputError();
     const absolutePath = this.getAbsolutePath(itempPath);
-    await services.checkIfExist(absolutePath);
-    await services.rm(absolutePath);
+    await fs.checkIfExist(absolutePath);
+    await fs.rm(absolutePath);
   }
 
   async mv(itempPath = 'q', itemNewPath = 'qwe1111') {
     if (!itempPath || !itemNewPath) throw new InputError();
     const absolutePath = this.getAbsolutePath(itempPath);
     const absoluteNewPath = this.getAbsolutePath(itemNewPath);
-    await services.checkIfExist(absolutePath);
-    await services.checkIfNotExist(absoluteNewPath);
-    await services.mv(absolutePath, absoluteNewPath);
+    await fs.checkIfExist(absolutePath);
+    await fs.checkIfNotExist(absoluteNewPath);
+    await fs.mv(absolutePath, absoluteNewPath);
   }
 
   async cat(path) {
     if (!path) throw new InputError();
     const absolutePath = this.getAbsolutePath(path);
-    await services.checkIfExist(absolutePath);
-    const item = await services.getItem(absolutePath);
+    await fs.checkIfExist(absolutePath);
+    const item = await fs.getItem(absolutePath);
     if (!item.isFile) throw new InputError();
-    await services.cat(absolutePath);
+    await fs.cat(absolutePath);
   }
 
   async add(fileName) {
     if (!fileName) throw new InputError();
     const filepath = this.getAbsolutePath(fileName);
-    await services.checkIfNotExist(filepath);
-    await services.add(filepath);
+    await fs.checkIfNotExist(filepath);
+    await fs.add(filepath);
   }
 
   async ls() {
-    const list = await services.getList(this.dir);
+    const list = await fs.getList(this.dir);
     const groupedList = list.reduce(
       (acc, item) => {
         acc[item.type].push(item);
@@ -118,7 +110,7 @@ export class App {
   async cd(path) {
     if (!path) throw new InputError();
     const absolutePath = this.getAbsolutePath(path);
-    await services.checkIfExist(absolutePath);
+    await fs.checkIfExist(absolutePath);
     this.dir = absolutePath;
   }
 
