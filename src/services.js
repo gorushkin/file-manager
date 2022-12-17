@@ -68,3 +68,14 @@ export const cp = async (itempPath, itemNewPath) => {
     readableStream.on('end', res);
   });
 };
+
+export const rm = async (itempPath) => {
+  await promises.rm(itempPath);
+};
+
+export const mv = async (itempPath, itemNewPath) => {
+  await cp(itempPath, itemNewPath);
+  await rm(itempPath);
+};
+
+export const services =  {cat, add, mv, getList, getItem, rm, cp, checkIfExist, checkIfNotExist}

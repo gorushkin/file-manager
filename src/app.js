@@ -1,9 +1,8 @@
 import os from 'os';
 import readline from 'readline';
-import { getPath, getAbsolutePath, getNewPath } from './utils/index.js';
-
-import { add, cat, getItem, getList, checkIfExist, checkIfNotExist, rn, cp } from './services.js';
+import { services } from './services.js';
 import { AppError, InputError, OperationError } from './error.js';
+import { getPath, getAbsolutePath, getNewPath } from './utils/index.js';
 
 const messages = {
   currentPath: (path) => `You are currently in ${path}`,
@@ -38,41 +37,50 @@ export class App {
   async rn(itempPath, newFilename = 'qwerty.com') {
     if (!itempPath || !newFilename) throw new InputError();
     const absolutePath = this.getAbsolutePath(itempPath);
-    await checkIfExist(absolutePath);
-    const item = await getItem(absolutePath);
+    await services.checkIfExist(absolutePath);
+    const item = await services.getItem(absolutePath);
     if (!item.isFile) throw new InputError();
     const newPath = getNewPath(absolutePath, newFilename);
-    await checkIfNotExist(newPath);
-    await rn(absolutePath, newPath);
+    await services.checkIfNotExist(newPath);
+    await services.rn(absolutePath, newPath);
   }
 
   async cp(itempPath = 'q', itemNewPath = 'qwe') {
     if (!itempPath || !itemNewPath) throw new InputError();
     const absolutePath = this.getAbsolutePath(itempPath);
     const absoluteNewPath = this.getAbsolutePath(itemNewPath);
-    await checkIfExist(absolutePath);
-    await checkIfNotExist(absoluteNewPath);
-    await cp(absolutePath, absoluteNewPath);
+    await services.checkIfExist(absolutePath);
+    await services.checkIfNotExist(absoluteNewPath);
+    await services.cp(absolutePath, absoluteNewPath);
+  }
+
+  async mv(itempPath = 'q', itemNewPath = 'qwe1111') {
+    if (!itempPath || !itemNewPath) throw new InputError();
+    const absolutePath = this.getAbsolutePath(itempPath);
+    const absoluteNewPath = this.getAbsolutePath(itemNewPath);
+    await services.checkIfExist(absolutePath);
+    await services.checkIfNotExist(absoluteNewPath);
+    await services.mv(absolutePath, absoluteNewPath);
   }
 
   async cat(path) {
     if (!path) throw new InputError();
     const absolutePath = this.getAbsolutePath(path);
-    await checkIfExist(absolutePath);
-    const item = await getItem(absolutePath);
+    await services.checkIfExist(absolutePath);
+    const item = await services.getItem(absolutePath);
     if (!item.isFile) throw new InputError();
-    await cat(absolutePath);
+    await services.cat(absolutePath);
   }
 
   async add(fileName) {
     if (!fileName) throw new InputError();
     const filepath = this.getAbsolutePath(fileName);
-    await checkIfNotExist(filepath);
-    await add(filepath);
+    await services.checkIfNotExist(filepath);
+    await services.add(filepath);
   }
 
   async ls() {
-    const list = await getList(this.dir);
+    const list = await services.getList(this.dir);
     const groupedList = list.reduce(
       (acc, item) => {
         acc[item.type].push(item);
@@ -103,7 +111,7 @@ export class App {
   async cd(path) {
     if (!path) throw new InputError();
     const absolutePath = this.getAbsolutePath(path);
-    await checkIfExist(absolutePath);
+    await services.checkIfExist(absolutePath);
     this.dir = absolutePath;
   }
 
@@ -137,6 +145,7 @@ export class App {
       add: this.add.bind(this),
       rn: this.rn.bind(this),
       cp: this.cp.bind(this),
+      mv: this.mv.bind(this),
     };
 
     readline.createInterface(
