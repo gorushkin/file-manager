@@ -1,8 +1,7 @@
 import os from 'os';
-import readline from 'readline';
 import { fs } from './fs.js';
-import { AppError, InputError, OperationError } from './error.js';
-import { getPath, getAbsolutePath, getNewPath, getUsername } from './utils/index.js';
+import { InputError, OperationError } from './error.js';
+import { getPath, getAbsolutePath, getNewPath } from './unitls.js';
 
 const messages = {
   currentPath: (path) => `You are currently in ${path}`,
@@ -10,11 +9,17 @@ const messages = {
   bye: (username) => `Thank you for using File Manager, ${username}, goodbye!`,
 };
 
-export class App {
+export class FileManager {
   constructor(username) {
-    this.username = getUsername(username);
+    this.username = username;
     this.dir = null;
     this.homeDirectory = null;
+  }
+
+  init() {
+    this.homeDirectory = os.homedir();
+    // TODO: replace process.cwd() with os.homedir()
+    this.dir = process.cwd();
   }
 
   exit(withNewLine = false) {
@@ -25,6 +30,13 @@ export class App {
   sayHi() {
     console.log(messages.greeting(this.username));
   }
+
+  sayBye(withNewLine) {
+    const prefix = withNewLine ? '\n' : '';
+    const message = `${prefix}${messages.bye(this.username)}`;
+    console.log(message);
+  }
+  u;
 
   async rn(itempPath, newFilename = 'qwerty.com') {
     if (!itempPath || !newFilename) throw new InputError();
@@ -114,18 +126,6 @@ export class App {
     this.dir = absolutePath;
   }
 
-  sayBye(withNewLine) {
-    const prefix = withNewLine ? '\n' : '';
-    const message = `${prefix}${messages.bye(this.username)}`;
-    console.log(message);
-  }
-
-  init() {
-    this.homeDirectory = os.homedir();
-    // TODO: replace process.cwd() with os.homedir()
-    this.dir = process.cwd();
-  }
-
   printCurrentDir() {
     console.log(messages.currentPath(this.dir));
   }
@@ -134,7 +134,9 @@ export class App {
     this.init();
     this.sayHi();
     this.printCurrentDir();
+  }
 
+  async command(command, arg1, arg2) {
     const commandMapping = {
       '.exit': this.exit.bind(this),
       ls: this.ls.bind(this),
@@ -148,23 +150,7 @@ export class App {
       rm: this.rm.bind(this),
     };
 
-    readline.createInterface(
-      process.stdin.on('data', async (chunk) => {
-        try {
-          const [userInput] = chunk.toString().split('\n');
-          const [command, ...args] = userInput.split(' ');
-          const [arg1, arg2] = args.filter((item) => !!item);
-          if (commandMapping[command]) return await commandMapping[command](arg1, arg2);
-          throw new OperationError();
-        } catch (error) {
-          if (!(error instanceof AppError)) throw new Error(error);
-          console.log(error.message);
-        } finally {
-          this.printCurrentDir();
-        }
-      })
-    );
-
-    process.on('SIGINT', () => this.exit(true));
+    if (commandMapping[command]) return await commandMapping[command](arg1, arg2);
+    throw new OperationError();
   }
 }
