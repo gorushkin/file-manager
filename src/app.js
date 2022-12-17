@@ -45,13 +45,20 @@ export class App {
     await services.rn(absolutePath, newPath);
   }
 
-  async cp(itempPath = 'q', itemNewPath = 'qwe') {
+  async cp(itempPath, itemNewPath) {
     if (!itempPath || !itemNewPath) throw new InputError();
     const absolutePath = this.getAbsolutePath(itempPath);
     const absoluteNewPath = this.getAbsolutePath(itemNewPath);
     await services.checkIfExist(absolutePath);
     await services.checkIfNotExist(absoluteNewPath);
     await services.cp(absolutePath, absoluteNewPath);
+  }
+
+  async rm(itempPath = 'qwe') {
+    if (!itempPath ) throw new InputError();
+    const absolutePath = this.getAbsolutePath(itempPath);
+    await services.checkIfExist(absolutePath);
+    await services.rm(absolutePath);
   }
 
   async mv(itempPath = 'q', itemNewPath = 'qwe1111') {
@@ -146,6 +153,7 @@ export class App {
       rn: this.rn.bind(this),
       cp: this.cp.bind(this),
       mv: this.mv.bind(this),
+      rm: this.rm.bind(this),
     };
 
     readline.createInterface(
