@@ -1,5 +1,5 @@
 import { AppError, OperationError } from './error.js';
-import { createReadStream, promises } from 'fs';
+import { createReadStream, createWriteStream, promises } from 'fs';
 import { Item } from './item.js';
 import path from 'path';
 
@@ -57,4 +57,14 @@ export const getList = async (directoryPath) => {
     return await getItem(itemPath);
   });
   return await Promise.all(itemPaths);
+};
+
+export const copy = async (itempPath, itemNewPath) => {
+  return await new Promise((res, rej) => {
+    const readableStream = createReadStream(itempPath);
+    const writeableStream = createWriteStream(itemNewPath);
+    readableStream.pipe(writeableStream);
+    readableStream.on('error', rej);
+    readableStream.on('end', res);
+  });
 };
