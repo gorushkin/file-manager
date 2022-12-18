@@ -150,7 +150,7 @@ export class FileManager {
       '--EOL': () => JSON.stringify(os.EOL, null, 2),
       '--cpus': os.cpus,
       '--homedir': os.homedir,
-      '--username': () => this.username,
+      '--username': () => os.userInfo().username,
       '--architecture': os.arch,
     };
     if (osParamsMapping[param]) return await console.log(osParamsMapping[param]());
