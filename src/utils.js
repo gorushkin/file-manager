@@ -13,9 +13,8 @@ export const getPath = (...args) => {
   return getReccurPath(args);
 };
 
-export const parseArgs = () => {
+export const getArgs = (args) => {
   const argPrefix = '--';
-  const args = process.argv.slice(2);
 
   return args.reduce((acc, item) => {
     const [keyWithPrefix, value] = item.split('=');
@@ -23,6 +22,12 @@ export const parseArgs = () => {
     const key = keyWithPrefix.slice(2);
     return { ...acc, [key]: value };
   }, {});
+};
+
+export const parseArgs = () => {
+  const args = process.argv.slice(2);
+
+  return getArgs(args);
 };
 
 export const getArg = (argName) => parseArgs()[argName];

@@ -1,5 +1,6 @@
 import { FileManager } from './file-manager.js';
 import readline from 'readline';
+import { AppError } from './error.js';
 
 export const app = async (username) => {
   const fm = new FileManager(username);

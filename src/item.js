@@ -1,4 +1,4 @@
-import { getPath } from './unitls.js';
+import { getPath } from './utils.js';
 
 export class Item {
   constructor(name, path, isFile, isDirectory) {
