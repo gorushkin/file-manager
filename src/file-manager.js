@@ -82,6 +82,16 @@ export class FileManager {
     await fs.cat(absolutePath);
   }
 
+  async hash(path) {
+    if (!path) throw new InputError();
+    const absolutePath = this.getAbsolutePath(path);
+    await fs.checkIfExist(absolutePath);
+    const item = await fs.getItem(absolutePath);
+    if (!item.isFile) throw new InputError();
+    await fs.hash(absolutePath)
+  }
+
+
   async add(fileName) {
     if (!fileName) throw new InputError();
     const filepath = this.getAbsolutePath(fileName);
@@ -147,6 +157,7 @@ export class FileManager {
     throw new InputError();
   }
 
+
   async command(command, arg1, arg2) {
     const commandMapping = {
       '.exit': this.exit.bind(this),
@@ -160,6 +171,7 @@ export class FileManager {
       mv: this.mv.bind(this),
       rm: this.rm.bind(this),
       os: this.os.bind(this),
+      hash: this.hash.bind(this),
     };
 
     if (commandMapping[command]) return await commandMapping[command](arg1, arg2);
