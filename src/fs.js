@@ -1,8 +1,10 @@
 import { AppError, OperationError } from './error.js';
 import { createReadStream, createWriteStream, promises } from 'fs';
 import { Item } from './item.js';
+import { createBrotliCompress, createBrotliDecompress, createGzip } from 'zlib';
 import path from 'path';
 import { createHash } from 'crypto';
+import { pipeline } from 'stream';
 
 export const cat = async (path) => {
   return await new Promise((res, rej) => {
@@ -64,11 +66,37 @@ export const cp = async (itempPath, itemNewPath) => {
   return await new Promise((res, rej) => {
     const readableStream = createReadStream(itempPath);
     const writeableStream = createWriteStream(itemNewPath);
-    readableStream.pipe(writeableStream);
+
     readableStream.on('error', rej);
     readableStream.on('end', res);
+
+    readableStream.on('data', (chunk) => {
+      writeableStream.write(chunk);
+    });
   });
 };
+
+const arch = async (itempPath, itemNewPath, direction) => {
+  const directionMapping = {
+    compress: createBrotliCompress,
+    decompress: createBrotliDecompress,
+  };
+
+  return await new Promise((res, rej) => {
+    const readableStream = createReadStream(itempPath);
+    const writeableStream = createWriteStream(itemNewPath);
+    const archStream = directionMapping[direction]();
+    readableStream.on('error', rej);
+    readableStream.on('end', res);
+
+    pipeline(readableStream, archStream, writeableStream, (err) => {
+      if (err) console.log(err);
+    });
+  });
+};
+
+const compress = async (itempPath, itemNewPath) => arch(itempPath, itemNewPath, 'compress');
+const decompress = async (itempPath, itemNewPath) => arch(itempPath, itemNewPath, 'decompress');
 
 export const rm = async (itempPath) => {
   await promises.rm(itempPath);
@@ -85,6 +113,20 @@ const hash = async (itemPath) => {
   hash.update(fileContent);
   const fileHash = hash.digest('hex');
   console.log(fileHash);
-}
+};
 
-export const fs = { hash, cat, add, mv, getList, getItem, rm, cp, rn, checkIfExist, checkIfNotExist };
+export const fs = {
+  compress,
+  decompress,
+  hash,
+  cat,
+  add,
+  mv,
+  getList,
+  getItem,
+  rm,
+  cp,
+  rn,
+  checkIfExist,
+  checkIfNotExist,
+};

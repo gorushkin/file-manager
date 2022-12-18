@@ -64,7 +64,7 @@ export class FileManager {
     await fs.rm(absolutePath);
   }
 
-  async mv(itempPath = 'q', itemNewPath = 'qwe1111') {
+  async mv(itempPath, itemNewPath) {
     if (!itempPath || !itemNewPath) throw new InputError();
     const absolutePath = this.getAbsolutePath(itempPath);
     const absoluteNewPath = this.getAbsolutePath(itemNewPath);
@@ -88,9 +88,8 @@ export class FileManager {
     await fs.checkIfExist(absolutePath);
     const item = await fs.getItem(absolutePath);
     if (!item.isFile) throw new InputError();
-    await fs.hash(absolutePath)
+    await fs.hash(absolutePath);
   }
-
 
   async add(fileName) {
     if (!fileName) throw new InputError();
@@ -132,6 +131,8 @@ export class FileManager {
     if (!path) throw new InputError();
     const absolutePath = this.getAbsolutePath(path);
     await fs.checkIfExist(absolutePath);
+    const item = await fs.getItem(absolutePath);
+    if (!item.isDirectory) throw new InputError();
     this.dir = absolutePath;
   }
 
@@ -157,6 +158,19 @@ export class FileManager {
     throw new InputError();
   }
 
+  async arch(direction, itempPath, itemNewPath) {
+    const mapping = {
+      compress: fs.compress,
+      decompress: fs.decompress,
+    }
+    if (!itempPath || !itemNewPath) throw new InputError();
+    const absolutePath = this.getAbsolutePath(itempPath);
+    const absoluteNewPath = this.getAbsolutePath(itemNewPath);
+    await fs.checkIfExist(absolutePath);
+    await fs.checkIfNotExist(absoluteNewPath);
+    await mapping[direction](absolutePath, absoluteNewPath);
+
+  }
 
   async command(command, arg1, arg2) {
     const commandMapping = {
@@ -172,6 +186,8 @@ export class FileManager {
       rm: this.rm.bind(this),
       os: this.os.bind(this),
       hash: this.hash.bind(this),
+      compress: this.arch.bind(this, 'compress'),
+      decompress: this.arch.bind(this, 'decompress')
     };
 
     if (commandMapping[command]) return await commandMapping[command](arg1, arg2);
