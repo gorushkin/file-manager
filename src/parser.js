@@ -48,6 +48,11 @@ export const parseInput = (str) => {
         }
         isWordOpen = true;
         acc.word.push(char);
+        if (i === array.length - 1) {
+          isWordOpen = false;
+          acc.words.push(acc.word.join(''));
+          acc.word = [];
+        }
         return acc;
       }
     },
