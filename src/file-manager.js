@@ -18,8 +18,7 @@ export class FileManager {
 
   init() {
     this.homeDirectory = os.homedir();
-    // TODO: replace process.cwd() with os.homedir()
-    this.dir = process.cwd();
+    this.dir = this.homeDirectory;
   }
 
   exit(withNewLine = false) {
@@ -37,7 +36,7 @@ export class FileManager {
     console.log(message);
   }
 
-  async rn(itempPath, newFilename = 'qwerty.com') {
+  async rn(itempPath, newFilename) {
     if (!itempPath || !newFilename) throw new InputError();
     const absolutePath = this.getAbsolutePath(itempPath);
     await fs.checkIfExist(absolutePath);
