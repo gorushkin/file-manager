@@ -1,6 +1,7 @@
 import { FileManager } from './file-manager.js';
 import readline from 'readline';
 import { AppError } from './error.js';
+import { parseInput } from '../parser.js';
 
 export const app = async (username) => {
   const fm = new FileManager(username);
@@ -10,8 +11,9 @@ export const app = async (username) => {
     process.stdin.on('data', async (chunk) => {
       try {
         const [userInput] = chunk.toString().split('\n');
-        const [command, ...args] = userInput.split(' ');
-        const [arg1, arg2] = args.filter((item) => !!item);
+        const parsedInput = parseInput(userInput);
+        const [command, ...args] = parsedInput;
+        const [arg1, arg2] = args.filter((item) => !!item).map(item => item.replace(/"/g, ''))
         await fm.command(command, arg1, arg2);
       } catch (error) {
         if (!(error instanceof AppError)) throw new Error(error);
