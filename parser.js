@@ -26,13 +26,11 @@ export const parseInput = (str) => {
       }
 
       if (isQuoteOpen) {
-        if (char === '"') {
-          if (next === ' ' || next === undefined) {
-            isQuoteOpen = false;
-            acc.words.push(acc.word.join(''));
-            acc.word = [];
-            return acc;
-          }
+        if (char === '"' && (next === ' ' || next === undefined)) {
+          isQuoteOpen = false;
+          acc.words.push(acc.word.join(''));
+          acc.word = [];
+          return acc;
         }
         acc.word.push(char);
         return acc;
@@ -40,15 +38,11 @@ export const parseInput = (str) => {
 
       if (!isWordOpen && !isQuoteOpen) {
         if (char === '"') {
-          if (prev === ' ' || prev === undefined) {
-            isQuoteOpen = true;
-          }
+          if (prev === ' ' || prev === undefined) isQuoteOpen = true;
           return acc;
         }
         if (char === ' ') {
-          if (next === '"') {
-            return acc;
-          }
+          if (next === '"') return acc;
           isWordOpen = true;
           return acc;
         }
