@@ -1,4 +1,4 @@
-import { getArg, getUsername } from './unitls.js';
+import { getArg, getUsername } from './utils.js';
 import { app } from './app.js';
 
 const rawUsername = getArg('username');

@@ -1,7 +1,7 @@
 import os from 'os';
 import { fs } from './fs.js';
-import { InputError, OperationError } from './error.js';
-import { getPath, getAbsolutePath, getNewPath } from './unitls.js';
+import { InputError } from './error.js';
+import { getPath, getAbsolutePath, getNewPath, getArgs } from './utils.js';
 
 const messages = {
   currentPath: (path) => `You are currently in ${path}`,
@@ -36,7 +36,6 @@ export class FileManager {
     const message = `${prefix}${messages.bye(this.username)}`;
     console.log(message);
   }
-  u;
 
   async rn(itempPath, newFilename = 'qwerty.com') {
     if (!itempPath || !newFilename) throw new InputError();
@@ -82,6 +81,16 @@ export class FileManager {
     if (!item.isFile) throw new InputError();
     await fs.cat(absolutePath);
   }
+
+  async hash(path) {
+    if (!path) throw new InputError();
+    const absolutePath = this.getAbsolutePath(path);
+    await fs.checkIfExist(absolutePath);
+    const item = await fs.getItem(absolutePath);
+    if (!item.isFile) throw new InputError();
+    await fs.hash(absolutePath)
+  }
+
 
   async add(fileName) {
     if (!fileName) throw new InputError();
@@ -136,6 +145,19 @@ export class FileManager {
     this.printCurrentDir();
   }
 
+  async os(param) {
+    const osParamsMapping = {
+      '--EOL': () => JSON.stringify(os.EOL, null, 2),
+      '--cpus': os.cpus,
+      '--homedir': os.homedir,
+      '--username': () => this.username,
+      '--architecture': os.arch,
+    };
+    if (osParamsMapping[param]) return await console.log(osParamsMapping[param]());
+    throw new InputError();
+  }
+
+
   async command(command, arg1, arg2) {
     const commandMapping = {
       '.exit': this.exit.bind(this),
@@ -148,9 +170,11 @@ export class FileManager {
       cp: this.cp.bind(this),
       mv: this.mv.bind(this),
       rm: this.rm.bind(this),
+      os: this.os.bind(this),
+      hash: this.hash.bind(this),
     };
 
     if (commandMapping[command]) return await commandMapping[command](arg1, arg2);
-    throw new OperationError();
+    throw new InputError();
   }
 }

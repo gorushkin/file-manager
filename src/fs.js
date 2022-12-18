@@ -2,6 +2,7 @@ import { AppError, OperationError } from './error.js';
 import { createReadStream, createWriteStream, promises } from 'fs';
 import { Item } from './item.js';
 import path from 'path';
+import { createHash } from 'crypto';
 
 export const cat = async (path) => {
   return await new Promise((res, rej) => {
@@ -78,4 +79,12 @@ export const mv = async (itempPath, itemNewPath) => {
   await rm(itempPath);
 };
 
-export const fs = { cat, add, mv, getList, getItem, rm, cp, rn, checkIfExist, checkIfNotExist };
+const hash = async (itemPath) => {
+  const fileContent = await promises.readFile(itemPath);
+  const hash = createHash('sha256');
+  hash.update(fileContent);
+  const fileHash = hash.digest('hex');
+  console.log(fileHash);
+}
+
+export const fs = { hash, cat, add, mv, getList, getItem, rm, cp, rn, checkIfExist, checkIfNotExist };
