@@ -1,7 +1,7 @@
 import os from 'os';
 import { fs } from './fs.js';
-import { InputError } from './error.js';
-import { getPath, getAbsolutePath, getNewPath, getArgs } from './utils.js';
+import { AppError, InputError, OperationError } from './error.js';
+import { getPath, getAbsolutePath, getNewPath } from './utils.js';
 
 const messages = {
   currentPath: (path) => `You are currently in ${path}`,
@@ -19,6 +19,7 @@ export class FileManager {
   init() {
     this.homeDirectory = os.homedir();
     this.dir = this.homeDirectory;
+    // this.dir = process.cwd();
   }
 
   exit(withNewLine = false) {
@@ -87,7 +88,8 @@ export class FileManager {
     await fs.checkIfExist(absolutePath);
     const item = await fs.getItem(absolutePath);
     if (!item.isFile) throw new InputError();
-    await fs.hash(absolutePath);
+    const hash = await fs.hash(absolutePath);
+    console.log(hash);
   }
 
   async add(fileName) {
@@ -161,14 +163,13 @@ export class FileManager {
     const mapping = {
       compress: fs.compress,
       decompress: fs.decompress,
-    }
+    };
     if (!itempPath || !itemNewPath) throw new InputError();
     const absolutePath = this.getAbsolutePath(itempPath);
     const absoluteNewPath = this.getAbsolutePath(itemNewPath);
     await fs.checkIfExist(absolutePath);
     await fs.checkIfNotExist(absoluteNewPath);
     await mapping[direction](absolutePath, absoluteNewPath);
-
   }
 
   async command(command, arg1, arg2) {
@@ -186,10 +187,14 @@ export class FileManager {
       os: this.os.bind(this),
       hash: this.hash.bind(this),
       compress: this.arch.bind(this, 'compress'),
-      decompress: this.arch.bind(this, 'decompress')
+      decompress: this.arch.bind(this, 'decompress'),
     };
 
-    if (commandMapping[command]) return await commandMapping[command](arg1, arg2);
-    throw new InputError();
+    if (!commandMapping[command]) throw new InputError();
+    try {
+      await commandMapping[command](arg1, arg2);
+    } catch (error) {
+      if (!(error instanceof AppError)) throw new OperationError();
+    }
   }
 }
