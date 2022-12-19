@@ -1,7 +1,7 @@
-import { AppError, OperationError } from './error.js';
+import { AppError, InputError } from './error.js';
 import { createReadStream, createWriteStream, promises } from 'fs';
 import { Item } from './item.js';
-import { createBrotliCompress, createBrotliDecompress, createGzip } from 'zlib';
+import { createBrotliCompress, createBrotliDecompress } from 'zlib';
 import path from 'path';
 import { createHash } from 'crypto';
 import { pipeline } from 'stream';
@@ -17,29 +17,21 @@ export const cat = async (path) => {
 };
 
 export const add = async (path) => {
-  try {
-    await promises.writeFile(path, '');
-  } catch (error) {
-    console.log('error: ', error);
-  }
+  await promises.writeFile(path, '');
 };
 
 export const rn = async (oldPath, newPath) => {
-  try {
-    await promises.rename(oldPath, newPath);
-  } catch (error) {
-    console.log('error: ', error);
-  }
+  await promises.rename(oldPath, newPath);
 };
 
 export const checkIfExist = async (path, isExist = false) => {
   try {
     await promises.stat(path);
-    if (isExist) throw new OperationError();
+    if (isExist) throw new InputError();
   } catch (error) {
     if (isExist && error.code === 'ENOENT') return;
-    if (!isExist && error.code === 'ENOENT') throw new OperationError();
-    if (error instanceof AppError) throw new OperationError();
+    if (!isExist && error.code === 'ENOENT') throw new InputError();
+    if (error instanceof AppError) throw new InputError();
 
     throw new Error(error);
   }
@@ -111,8 +103,7 @@ const hash = async (itemPath) => {
   const fileContent = await promises.readFile(itemPath);
   const hash = createHash('sha256');
   hash.update(fileContent);
-  const fileHash = hash.digest('hex');
-  console.log(fileHash);
+  return hash.digest('hex');
 };
 
 export const fs = {

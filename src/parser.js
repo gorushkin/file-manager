@@ -7,14 +7,18 @@ export const parseInput = (str) => {
       const prev = array[i - 1];
       const next = array[i + 1];
 
-      if (isWordOpen) {
-        if (i === array.length - 1) {
-          isWordOpen = false;
+      if (i === array.length - 1) {
+        if (char === '"') {
+          if (!isQuoteOpen) acc.word.push(char);
+        } else {
           acc.word.push(char);
-          acc.words.push(acc.word.join(''));
-          acc.word = [];
-          return acc;
         }
+        acc.words.push(acc.word.join(''));
+        acc.word = [];
+        return acc;
+      }
+
+      if (isWordOpen) {
         if (char === ' ') {
           isWordOpen = false;
           acc.words.push(acc.word.join(''));
@@ -48,11 +52,6 @@ export const parseInput = (str) => {
         }
         isWordOpen = true;
         acc.word.push(char);
-        if (i === array.length - 1) {
-          isWordOpen = false;
-          acc.words.push(acc.word.join(''));
-          acc.word = [];
-        }
         return acc;
       }
     },
